@@ -32,8 +32,19 @@ variable "state_bucket" {
   default = "jim-gha-demo-tfstate"
 }
 
+variable "github_owner_id" {
+  type        = string
+  description = "Numeric GitHub owner ID"
+}
+
+variable "repo_id" {
+  type        = string
+  description = "Numeric GitHub repo ID"
+}
+
 locals {
   repo_full     = "${var.github_owner}/${var.repo}"
+  repo_sub      = "repo:${var.github_owner}@${var.github_owner_id}/${var.repo}@${var.repo_id}"
   managed_arns  = ["arn:aws:s3:::payments-statements-*", "arn:aws:s3:::payments-statements-*/*"]
   state_arns    = [aws_s3_bucket.state.arn, "${aws_s3_bucket.state.arn}/*"]
   oidc_provider = aws_iam_openid_connect_provider.github.arn
@@ -79,7 +90,7 @@ data "aws_iam_policy_document" "trust_plan" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${local.repo_full}:pull_request"]
+      values   = ["${local.repo_sub}:pull_request"]
     }
   }
 }
@@ -124,7 +135,7 @@ data "aws_iam_policy_document" "trust_apply" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${local.repo_full}:environment:production"]
+      values   = ["${local.repo_sub}:environment:production"]
     }
   }
 }
